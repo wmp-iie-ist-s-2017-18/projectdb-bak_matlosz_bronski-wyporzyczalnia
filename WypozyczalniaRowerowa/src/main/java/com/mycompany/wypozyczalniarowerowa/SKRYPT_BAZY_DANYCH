@@ -1,0 +1,153 @@
+--Tworzenie tabeli rowery
+CREATE TABLE public.rowery (
+    id SERIAL PRIMARY KEY,
+    model character varying(255),
+    stawka integer,
+    usuniety boolean
+);
+
+--Tworzenie tabeli klienci
+CREATE TABLE public.klienci (
+    id SERIAL PRIMARY KEY,
+    imie character varying(255),
+    nazwisko character varying(255),
+    nrdokumentu character varying(255),
+    nrtelefonu character varying(255),
+    usuniety boolean
+);
+
+--Tworzenie tabeli wypozyczenia
+CREATE TABLE public.wypozyczenia (
+    id SERIAL PRIMARY KEY,
+    kosztwypozyczenia integer,
+    wypozyczenieod timestamp without time zone,
+    wypozyczeniedo timestamp without time zone,
+	klientid integer REFERENCES public.klienci(id), --klucz obcy do klienta
+	rowerid integer REFERENCES public.rowery(id), --klucz obcy do roweru
+	usuniete boolean
+);
+
+--Dodawanie nowego roweru
+CREATE FUNCTION public.dodajRower(model character varying, stawka numeric) RETURNS numeric
+    LANGUAGE plpgsql
+    AS $$ 
+DECLARE max_id NUMERIC; 
+BEGIN
+	INSERT INTO public.rowery (model, stawka, usuniety) VALUES (model, stawka, FALSE);
+	SELECT MAX(id) 
+          INTO max_id 
+          FROM public.rowery;
+	RETURN max_id;
+END;
+$$;
+
+--Test funkcji dodajRower
+--SELECT public.dodajRower('BMX X09', 9);
+
+--Usuwanie roweru
+CREATE FUNCTION public.usunRower(rowerid numeric) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	UPDATE public.rowery SET usuniety = TRUE WHERE public.rowery.id = rowerid;
+END;
+$$;
+
+--Test funkcji usunRower
+--SELECT public.usunRower(1);
+
+--Aktualizacja roweru
+CREATE FUNCTION public.aktualizujRower(rowerid numeric, rowermodel character varying, rowerstawka numeric) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	UPDATE public.rowery SET model = rowermodel, stawka = rowerstawka WHERE public.rowery.id = rowerid;
+END;
+$$;
+
+--Test funkcji aktualizujRower
+--SELECT public.aktualizujRower(1, 'model 1 zm.', 24);
+
+--Dodawanie nowego klienta
+CREATE FUNCTION public.dodajKlienta(imie character varying, nazwisko character varying, nrdokumentu character varying, nrtelefonu character varying) RETURNS numeric
+    LANGUAGE plpgsql
+    AS $$ 
+DECLARE max_id NUMERIC; 
+BEGIN
+	INSERT INTO public.klienci (imie, nazwisko, nrdokumentu, nrtelefonu, usuniety) VALUES (imie, nazwisko, nrdokumentu, nrtelefonu, FALSE);
+	SELECT MAX(id) 
+          INTO max_id 
+          FROM public.klienci;
+	RETURN max_id;
+END;
+$$;
+
+--Test funkcji dodajKlienta
+--SELECT public.dodajKlienta('Janusz', 'Cebula', 'AXE 5498498', '+48 678 991 549');
+
+--Usuwanie klienta
+CREATE FUNCTION public.usunKlienta(klientid numeric) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	UPDATE public.klienci SET usuniety = TRUE WHERE public.klienci.id = klientid;
+END;
+$$;
+
+--Test funkcji usunKlienta
+--SELECT public.usunKlienta(1);
+
+--Aktualizacja klienta
+CREATE FUNCTION public.aktualizujKlienta(klientid numeric, klientimie character varying, klientnazwisko character varying, klientnrdokumentu character varying, klientnrtelefonu character varying) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	UPDATE public.klienci SET imie = klientimie, nazwisko = klientnazwisko, nrdokumentu = klientnrdokumentu, nrtelefonu = klientnrtelefonu WHERE public.klienci.id = klientid;
+END;
+$$;
+
+--Test funkcji aktualizujKlienta
+--SELECT public.aktualizujKlienta(1, 'Janusz', 'Nowak', 'AXE 5498498', '+48 678 991 549');
+
+--Dodawanie nowego wypożyczenia
+CREATE FUNCTION public.dodajWypozyczenie(wypozyczenieod timestamp without time zone, klientid numeric, rowerid numeric) RETURNS numeric
+    LANGUAGE plpgsql
+    AS $$ 
+DECLARE max_id NUMERIC; 
+BEGIN
+	INSERT INTO public.wypozyczenia (wypozyczenieod, klientid, rowerid, usuniete) VALUES (wypozyczenieod, klientid, rowerid, FALSE);
+	SELECT MAX(id) 
+          INTO max_id 
+          FROM public.wypozyczenia;
+	RETURN max_id;
+END;
+$$;
+
+--Test funkcji dodajWypozyczenie
+--SELECT public.dodajWypozyczenie('2019-05-30 12:59:05'::TIMESTAMP WITHOUT TIME ZONE, 1, 1);
+
+--Usuwanie wypozyczenia
+CREATE FUNCTION public.usunWypozyczenie(wypozyczenieid numeric) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	UPDATE public.wypozyczenia SET usuniete = TRUE WHERE public.wypozyczenia.id = wypozyczenieid;
+END;
+$$;
+
+--Test funkcji usunWypozyczenie
+--SELECT public.usunWypozyczenie(1);
+
+--Aktualizacja wypozyczenia
+CREATE FUNCTION public.aktualizujWypozyczenie(wypozyczenieid numeric, wypozyczeniekoszt numeric, datawypozyczeniaod timestamp without time zone, datawypozyczeniado timestamp without time zone) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	UPDATE public.wypozyczenia SET kosztwypozyczenia = wypozyczeniekoszt, wypozyczenieod = datawypozyczeniaod, wypozyczeniedo = datawypozyczeniado WHERE public.wypozyczenia.id = wypozyczenieid;
+END;
+$$;
+
+--Test funkcji aktualizujWypozyczenie
+--SELECT public.aktualizujWypozyczenie(1, 28, '2019-05-30 13:01:05'::TIMESTAMP WITHOUT TIME ZONE, '2019-05-30 14:27:51'::TIMESTAMP WITHOUT TIME ZONE);
+
+
